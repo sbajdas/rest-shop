@@ -27,7 +27,7 @@ public class TransactionService {
     var product = productFinder.findProduct(productId);
     var transaction = findTransaction(transactionId);
     transaction = transactionManipulator.addItem(transaction, product, quantity);
-    ClientTransaction saved = transactionRepository.save(transaction);
+    var saved = transactionRepository.save(transaction);
     //TODO: Calculate total price
     //TODO: Return DTO with total price
     log.info("Item added to transaction with id {}. Product id: {}, quantity: {}", transactionId, productId, quantity);
@@ -37,7 +37,7 @@ public class TransactionService {
   ClientTransaction createTransaction(Long productId, BigDecimal quantity) {
     var product = productFinder.findProduct(productId);
     var transaction = transactionManipulator.startNew(quantity, product);
-    ClientTransaction saved = transactionRepository.save(transaction);
+    var saved = transactionRepository.save(transaction);
     log.info("New transaction with id {}. Product id: {}, quantity: {}", saved.getTransactionId(), productId, quantity);
     return saved;
   }

@@ -23,11 +23,10 @@ class TransactionManipulatorTest {
   @Test
   void shouldStartNewTransactionWithProductQuantity() {
     //given
-    ClientTransaction expected = new ClientTransaction();
-    expected.addItem(TEST_PRODUCT, BigDecimal.ONE);
+    var expected = getTransactionWithItem();
 
     //when
-    ClientTransaction actual = manipulator.startNew(BigDecimal.ONE, TEST_PRODUCT);
+    var actual = manipulator.startNew(BigDecimal.ONE, TEST_PRODUCT);
 
     //then
     assertEquals(expected, actual);
@@ -36,10 +35,10 @@ class TransactionManipulatorTest {
   @Test
   void shouldAddNewItemToTransaction() {
     //given
-    ClientTransaction transaction = new ClientTransaction();
+    var transaction = new ClientTransaction();
 
     //when
-    ClientTransaction actual = manipulator.addItem(transaction, TEST_PRODUCT, BigDecimal.ONE);
+    var actual = manipulator.addItem(transaction, TEST_PRODUCT, BigDecimal.ONE);
 
     //then
     assertEquals(1, actual.getItems().size());
@@ -50,11 +49,10 @@ class TransactionManipulatorTest {
   @Test
   void shouldAddQuantityToExistingItemInTransaction() {
     //given
-    ClientTransaction transaction = new ClientTransaction();
-    transaction.addItem(TEST_PRODUCT, BigDecimal.ONE);
+    var transaction = getTransactionWithItem();
 
     //when
-    ClientTransaction actual = manipulator.addItem(transaction, TEST_PRODUCT, BigDecimal.ONE);
+    var actual = manipulator.addItem(transaction, TEST_PRODUCT, BigDecimal.ONE);
 
     //then
     assertEquals(1, actual.getItems().size());
@@ -66,16 +64,21 @@ class TransactionManipulatorTest {
   @Test
   void shouldAddNewProductToItemsInTransaction() {
     //given
-    ClientTransaction transaction = new ClientTransaction();
-    transaction.addItem(TEST_PRODUCT, BigDecimal.ONE);
+    var transaction = getTransactionWithItem();
 
     //when
-    ClientTransaction actual = manipulator.addItem(transaction, ANOTHER_TEST_PRODUCT, BigDecimal.ONE);
+    var actual = manipulator.addItem(transaction, ANOTHER_TEST_PRODUCT, BigDecimal.ONE);
 
     //then
     assertEquals(2, actual.getItems().size());
     assertTrue(actual.getItems().stream().anyMatch(pq -> pq.containsProduct(ANOTHER_TEST_PRODUCT)));
     assertTrue(actual.getItems().stream().anyMatch(pq -> pq.containsProduct(TEST_PRODUCT)));
+  }
+
+  private ClientTransaction getTransactionWithItem() {
+    var expected = new ClientTransaction();
+    expected.addItem(TEST_PRODUCT, BigDecimal.ONE);
+    return expected;
   }
 
 }
