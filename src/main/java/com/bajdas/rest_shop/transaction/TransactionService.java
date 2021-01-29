@@ -1,6 +1,7 @@
 package com.bajdas.rest_shop.transaction;
 
 import com.bajdas.rest_shop.model.ClientTransaction;
+import com.bajdas.rest_shop.model.ClientTransactionDto;
 import com.bajdas.rest_shop.product.ProductFinder;
 import com.bajdas.rest_shop.repository.TransactionRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -15,31 +16,33 @@ public class TransactionService {
   private TransactionManipulator transactionManipulator;
   private ProductFinder productFinder;
   private TransactionRepository transactionRepository;
+  private TotalPriceCalculator priceCalculator;
 
   @Autowired
-  public TransactionService(ProductFinder productFinder, TransactionRepository transactionRepository, TransactionManipulator transactionManipulator) {
+  public TransactionService(ProductFinder productFinder, TransactionRepository transactionRepository, TransactionManipulator transactionManipulator, TotalPriceCalculator priceCalculator) {
     this.productFinder = productFinder;
     this.transactionRepository = transactionRepository;
     this.transactionManipulator = transactionManipulator;
+    this.priceCalculator = priceCalculator;
   }
 
-  ClientTransaction addToTransaction(Long transactionId, Long productId, BigDecimal quantity) {
+  ClientTransactionDto addToTransaction(Long transactionId, Long productId, BigDecimal quantity) {
     var product = productFinder.findProduct(productId);
     var transaction = findTransaction(transactionId);
     transaction = transactionManipulator.addItem(transaction, product, quantity);
     var saved = transactionRepository.save(transaction);
-    //TODO: Calculate total price
-    //TODO: Return DTO with total price
+    var totalPrice = priceCalculator.calculate(saved.getItems());
     log.info("Item added to transaction with id {}. Product id: {}, quantity: {}", transactionId, productId, quantity);
-    return saved;
+    return TransactionDtoTranslator.translate(saved, totalPrice);
   }
 
-  ClientTransaction createTransaction(Long productId, BigDecimal quantity) {
+  ClientTransactionDto createTransaction(Long productId, BigDecimal quantity) {
     var product = productFinder.findProduct(productId);
     var transaction = transactionManipulator.startNew(quantity, product);
     var saved = transactionRepository.save(transaction);
+    var totalPrice = priceCalculator.calculate(saved.getItems());
     log.info("New transaction with id {}. Product id: {}, quantity: {}", saved.getTransactionId(), productId, quantity);
-    return saved;
+    return TransactionDtoTranslator.translate(saved, totalPrice);
   }
 
   private ClientTransaction findTransaction(Long transactionId) {

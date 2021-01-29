@@ -1,6 +1,6 @@
 package com.bajdas.rest_shop.transaction;
 
-import com.bajdas.rest_shop.model.ClientTransaction;
+import com.bajdas.rest_shop.model.ClientTransactionDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,8 +16,8 @@ public class TransactionController {
   private TransactionService transactionService;
 
   @PostMapping("/addToBasket")
-  public ResponseEntity<ClientTransaction> addToBasket(@RequestParam(required = false) Long transactionId, @RequestParam Long productId, @RequestParam double quantity) {
-    ClientTransaction storedTransaction;
+  public ResponseEntity<ClientTransactionDto> addToBasket(@RequestParam(required = false) Long transactionId, @RequestParam Long productId, @RequestParam double quantity) {
+    ClientTransactionDto storedTransaction;
     var productQuantity = BigDecimal.valueOf(quantity);
     if(Objects.nonNull(transactionId)) {
       storedTransaction = transactionService.addToTransaction(transactionId, productId, productQuantity);

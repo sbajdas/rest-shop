@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -36,6 +35,9 @@ class TransactionServiceTest {
 
   @Mock
   private TransactionManipulator manipulatorMock;
+
+  @Mock
+  private TotalPriceCalculator calculatorMock;
 
   @InjectMocks
   private TransactionService transactionService;
@@ -57,8 +59,10 @@ class TransactionServiceTest {
   @Test
   void shouldStartNewTransactionWhenIdNotProvided() {
     //given
+    ClientTransaction transaction = prepareTransaction(expectedProduct, QUANTITY);
     when(manipulatorMock.startNew(any(), any(Product.class)))
-        .thenReturn(createTransaction(expectedProduct, QUANTITY));
+        .thenReturn(transaction);
+    when(transactionRepositoryMock.save(any(ClientTransaction.class))).thenReturn(transaction);
 
     //when
     transactionService.createTransaction(1L, QUANTITY);
@@ -85,22 +89,24 @@ class TransactionServiceTest {
   @Test
   void shouldSaveTransactionWithProductAmount() {
     //given
+    var transaction = prepareTransaction(expectedProduct, QUANTITY);
     when(manipulatorMock.startNew(any(), any(Product.class)))
-        .thenReturn(createTransaction(expectedProduct, QUANTITY));
+        .thenReturn(transaction);
+
+    when(transactionRepositoryMock.save(transactionCaptor.capture())).thenReturn(transaction);
 
     //when
     transactionService.createTransaction(1L, QUANTITY);
 
     //then
     verify(transactionRepositoryMock, never()).findById(anyLong());
-    verify(transactionRepositoryMock).save(transactionCaptor.capture());
     var actual = transactionCaptor.getValue();
     assertEquals(1, actual.getItems().size());
     assertEquals(expectedProduct, actual.getItems().get(0).getItem());
     assertEquals(QUANTITY, actual.getItems().get(0).getQuantity());
   }
 
-  private ClientTransaction createTransaction(Product product, BigDecimal quantity) {
+  private ClientTransaction prepareTransaction(Product product, BigDecimal quantity) {
     ClientTransaction transaction = new ClientTransaction();
     transaction.addItem(product, quantity);
     return transaction;
