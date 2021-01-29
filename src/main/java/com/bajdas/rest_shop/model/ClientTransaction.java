@@ -8,22 +8,24 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Data
-public class ClientBasket {
+public class ClientTransaction {
 
   @Id
   @GeneratedValue(strategy = GenerationType.SEQUENCE)
   Long transactionId;
+  //TODO: Add Client concept
   @Embedded
   @ElementCollection
-  List<ProductAmount> productAmount = new ArrayList<>();
+  List<ProductQuantity> items = new ArrayList<>();
 
-  public void addProductAmount(Product product, Long quantity) {
-    getProductAmount().add(new ProductAmount(product, quantity));
+  public void addItem(Product product, BigDecimal quantity) {
+    items.add(new ProductQuantity(product, quantity));
   }
 
 

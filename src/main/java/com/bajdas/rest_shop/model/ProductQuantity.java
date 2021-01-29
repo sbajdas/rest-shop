@@ -9,16 +9,24 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import java.math.BigDecimal;
 
 @Embeddable
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-class ProductAmount {
-//  @ManyToMany
+public class ProductQuantity {
   @ManyToOne
   @JoinColumn(name = "product_id", nullable = false)
-  private Product product;
+  private Product item;
   @Column(nullable = false)
-  private Long amount;
+  private BigDecimal quantity;
+
+  public void addQuantityToProduct(BigDecimal newQuantity) {
+    quantity = quantity.add(newQuantity);
+  }
+
+  public boolean containsProduct(Product product) {
+    return item.equals(product);
+  }
 }

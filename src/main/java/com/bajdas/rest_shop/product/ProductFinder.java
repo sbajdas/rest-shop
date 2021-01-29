@@ -24,11 +24,8 @@ public class ProductFinder {
   @Cacheable("findProduct")
   Product findProduct(Long id, String name) {
     log.info("Product search not from cache: id {}, name: {}", id, name);
-    return Optional.ofNullable(id)
-        .map(repository::findById)
-        .map(Optional::get)
-        .or(() -> repository.findByName(name))
-        .orElseThrow(ProductNotFoundException::new);
+    Optional<Product> product = (id != null) ? repository.findById(id) : repository.findByName(name);
+    return product.orElseThrow(ProductNotFoundException::new);
   }
 
   @Cacheable("findAllProducts")

@@ -1,40 +1,48 @@
 package com.bajdas.rest_shop.transaction;
 
-import com.bajdas.rest_shop.model.ClientBasket;
-import com.bajdas.rest_shop.model.Product;
-import com.bajdas.rest_shop.model.ProductDto;
+import com.bajdas.rest_shop.model.ClientTransaction;
 import com.bajdas.rest_shop.product.ProductFinder;
 import com.bajdas.rest_shop.repository.TransactionRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 @Service
+@Slf4j
 public class TransactionService {
-  @Autowired
+  private TransactionManipulator transactionManipulator;
   private ProductFinder productFinder;
-  @Autowired
   private TransactionRepository transactionRepository;
 
-  public ProductDto addToBasket(Long id, int quantity) {
-    Product product = productFinder.findProduct(id);
-    BigDecimal totalPrice = product.getPrice().multiply(BigDecimal.valueOf(quantity));
-    return new ProductDto(product, quantity, totalPrice);
+  @Autowired
+  public TransactionService(ProductFinder productFinder, TransactionRepository transactionRepository, TransactionManipulator transactionManipulator) {
+    this.productFinder = productFinder;
+    this.transactionRepository = transactionRepository;
+    this.transactionManipulator = transactionManipulator;
   }
 
-  ClientBasket addToBasket(Long basketId, Long productId, Long quantity) {
-    var basket = Optional.ofNullable(basketId)
-        .map(transactionRepository::findById)
-        .map(Optional::get)
-        .orElseGet(ClientBasket::new);
+  ClientTransaction addToTransaction(Long transactionId, Long productId, BigDecimal quantity) {
     var product = productFinder.findProduct(productId);
-    return add(basket, product, quantity);
+    var transaction = findTransaction(transactionId);
+    transaction = transactionManipulator.addItem(transaction, product, quantity);
+    ClientTransaction saved = transactionRepository.save(transaction);
+    //TODO: Calculate total price
+    //TODO: Return DTO with total price
+    log.info("Item added to transaction with id {}. Product id: {}, quantity: {}", transactionId, productId, quantity);
+    return saved;
   }
 
-  private ClientBasket add(ClientBasket clientBasket, Product product, Long quantity) {
-    clientBasket.addProductAmount(product, quantity);
-    return transactionRepository.save(clientBasket);
+  ClientTransaction createTransaction(Long productId, BigDecimal quantity) {
+    var product = productFinder.findProduct(productId);
+    var transaction = transactionManipulator.startNew(quantity, product);
+    ClientTransaction saved = transactionRepository.save(transaction);
+    log.info("New transaction with id {}. Product id: {}, quantity: {}", saved.getTransactionId(), productId, quantity);
+    return saved;
+  }
+
+  private ClientTransaction findTransaction(Long transactionId) {
+    return transactionRepository.findById(transactionId).orElseThrow(TransactionNotFoundException::new);
   }
 }

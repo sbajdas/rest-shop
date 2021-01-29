@@ -4,8 +4,10 @@ import com.bajdas.rest_shop.model.Product;
 import com.bajdas.rest_shop.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -23,6 +25,7 @@ class ProductFinderTest {
   private static final String EXPECTED_PRODUCT_NAME = "sample name";
   @Mock
   private ProductRepository productRepositoryMock;
+  @InjectMocks
   private ProductFinder finder;
   private final Product expectedProduct = Product.builder()
       .id(1L)
@@ -33,7 +36,6 @@ class ProductFinderTest {
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    finder = new ProductFinder(productRepositoryMock);
   }
 
   @Test
@@ -56,7 +58,6 @@ class ProductFinderTest {
     //when
     assertThrows(ProductNotFoundException.class, () -> finder.findProduct(1L));
   }
-
 
   @Test
   void shouldFindProductUsingSearchByIdWhenProvided() {
@@ -88,9 +89,8 @@ class ProductFinderTest {
   void shouldThrowExceptionWhenProductNotFoundByIdOrName() {
 
     //when
-    assertThrows(ProductNotFoundException.class, () -> finder.findProduct(null, EXPECTED_PRODUCT_NAME));
+    assertThrows(ProductNotFoundException.class, () -> finder.findProduct(8L, null));
   }
-
 
 
 }
