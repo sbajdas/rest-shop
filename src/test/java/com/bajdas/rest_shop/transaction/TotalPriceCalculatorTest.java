@@ -27,7 +27,7 @@ class TotalPriceCalculatorTest {
     var totalPrice = priceCalculator.calculate(items);
 
     //then
-    assertEquals(BigDecimal.ZERO, totalPrice);
+    assertEquals(0, BigDecimal.ZERO.compareTo(totalPrice));
   }
 
   @Test
@@ -40,7 +40,7 @@ class TotalPriceCalculatorTest {
     var totalPrice = priceCalculator.calculate(items);
 
     //then
-    assertEquals(BigDecimal.TEN, totalPrice);
+    assertEquals(0, BigDecimal.TEN.compareTo(totalPrice));
   }
 
   @Test
@@ -53,7 +53,7 @@ class TotalPriceCalculatorTest {
     var totalPrice = priceCalculator.calculate(items);
 
     //then
-    assertEquals(BigDecimal.valueOf(100), totalPrice);
+    assertEquals(0, BigDecimal.valueOf(100).compareTo(totalPrice));
   }
 
 
@@ -79,7 +79,7 @@ class TotalPriceCalculatorTest {
     var totalPrice = priceCalculator.calculate(items);
 
     //then
-    assertEquals(BigDecimal.valueOf(139), totalPrice);
+    assertEquals(0, BigDecimal.valueOf(139).compareTo(totalPrice));
   }
 
 }
