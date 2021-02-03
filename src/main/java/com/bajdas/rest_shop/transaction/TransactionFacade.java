@@ -12,40 +12,57 @@ import java.math.BigDecimal;
 
 @Service
 @Slf4j
-public class TransactionService {
+public class TransactionFacade {
   private TransactionManipulator transactionManipulator;
   private ProductFinder productFinder;
   private TransactionRepository transactionRepository;
   private TotalPriceCalculator priceCalculator;
 
   @Autowired
-  public TransactionService(ProductFinder productFinder, TransactionRepository transactionRepository, TransactionManipulator transactionManipulator, TotalPriceCalculator priceCalculator) {
+  public TransactionFacade(ProductFinder productFinder, TransactionRepository transactionRepository, TransactionManipulator transactionManipulator, TotalPriceCalculator priceCalculator) {
     this.productFinder = productFinder;
     this.transactionRepository = transactionRepository;
     this.transactionManipulator = transactionManipulator;
     this.priceCalculator = priceCalculator;
   }
 
+  ClientTransactionDto createTransaction(Long productId, BigDecimal quantity) {
+    var product = productFinder.findProduct(productId);
+    var transaction = transactionManipulator.startNew(quantity, product);
+    var transactionDto = saveChangesAndRetrieveDtoWithPrice(transaction);
+    log.info("New transaction with id {}. Product id: {}, quantity: {}", transactionDto.getTransactionId(), productId, quantity);
+    return transactionDto;
+  }
+
   ClientTransactionDto addToTransaction(Long transactionId, Long productId, BigDecimal quantity) {
     var product = productFinder.findProduct(productId);
     var transaction = findTransaction(transactionId);
     transaction = transactionManipulator.addItem(transaction, product, quantity);
-    var saved = transactionRepository.save(transaction);
-    var totalPrice = priceCalculator.calculate(saved.getItems());
+    var transactionDto = saveChangesAndRetrieveDtoWithPrice(transaction);
     log.info("Item added to transaction with id {}. Product id: {}, quantity: {}", transactionId, productId, quantity);
-    return TransactionDtoTranslator.translate(saved, totalPrice);
+    return transactionDto;
   }
 
-  ClientTransactionDto createTransaction(Long productId, BigDecimal quantity) {
-    var product = productFinder.findProduct(productId);
-    var transaction = transactionManipulator.startNew(quantity, product);
+  ClientTransactionDto finishTransaction(Long transactionId) {
+    var transaction = findTransaction(transactionId);
+    transaction.setCompleted(true);
+    var transactionDto = saveChangesAndRetrieveDtoWithPrice(transaction);
+    log.info("Transaction with id {} completed.", transactionId);
+    //TODO: send info via SNS/SQS
+    return transactionDto;
+  }
+
+  private ClientTransactionDto saveChangesAndRetrieveDtoWithPrice(ClientTransaction transaction) {
     var saved = transactionRepository.save(transaction);
     var totalPrice = priceCalculator.calculate(saved.getItems());
-    log.info("New transaction with id {}. Product id: {}, quantity: {}", saved.getTransactionId(), productId, quantity);
     return TransactionDtoTranslator.translate(saved, totalPrice);
   }
 
   private ClientTransaction findTransaction(Long transactionId) {
-    return transactionRepository.findById(transactionId).orElseThrow(TransactionNotFoundException::new);
+    var transaction = transactionRepository.findById(transactionId).orElseThrow(TransactionNotFoundException::new);
+    if(transaction.isCompleted()) {
+      throw new TransactionCompletedException();
+    }
+    return transaction;
   }
 }

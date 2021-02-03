@@ -18,7 +18,8 @@ public class ClientTransaction {
 
   @Id
   @GeneratedValue(strategy = GenerationType.SEQUENCE)
-  Long transactionId;
+  private Long transactionId;
+  private boolean completed;
   //TODO: Add Client concept
   @Embedded
   @ElementCollection
