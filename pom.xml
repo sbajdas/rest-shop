@@ -16,6 +16,7 @@
 
 	<properties>
 		<java.version>11</java.version>
+		<sns.version>2.15.74</sns.version>
 	</properties>
 
 	<dependencies>
@@ -38,7 +39,11 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>sns</artifactId>
+			<version>${sns.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

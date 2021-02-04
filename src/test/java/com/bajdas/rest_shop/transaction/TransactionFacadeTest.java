@@ -1,7 +1,10 @@
 package com.bajdas.rest_shop.transaction;
 
 import com.bajdas.rest_shop.model.ClientTransaction;
+import com.bajdas.rest_shop.model.ClientTransactionDto;
 import com.bajdas.rest_shop.model.Product;
+import com.bajdas.rest_shop.notification.Observer;
+import com.bajdas.rest_shop.notification.Status;
 import com.bajdas.rest_shop.product.ProductFinder;
 import com.bajdas.rest_shop.repository.TransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -31,15 +36,16 @@ class TransactionFacadeTest {
   private static final long SAMPLE_TRANSACTION_ID = 1L;
   @Mock
   private TransactionRepository transactionRepositoryMock;
-
   @Mock
   private ProductFinder productFinderMock;
-
   @Mock
   private TransactionManipulator manipulatorMock;
-
   @Mock
   private TotalPriceCalculator calculatorMock;
+  @Mock
+  private Observer observerMock;
+  @Mock
+  private List<Observer> observers;
 
   @InjectMocks
   private TransactionFacade transactionFacade;
@@ -57,6 +63,7 @@ class TransactionFacadeTest {
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
+    transactionFacade.registerObserver(observerMock);
     when(productFinderMock.findProduct(eq(SAMPLE_PRODUCT_ID))).thenReturn(SAMPLE_PRODUCT);
   }
 
@@ -145,7 +152,7 @@ class TransactionFacadeTest {
   }
 
   @Test
-  void shouldFinishTransaction() {
+  void shouldFinishTransactionAndNotifyObservers() {
     //given
     var transaction = prepareSampleTransaction();
     when(transactionRepositoryMock.findById(eq(SAMPLE_TRANSACTION_ID))).thenReturn(Optional.of(transaction));
@@ -157,6 +164,7 @@ class TransactionFacadeTest {
     //then
     var actual = transactionCaptor.getValue();
     assertTrue(actual.isCompleted());
+    verify(observerMock, times(1)).update(eq(Status.TRANSACTION_COMPLETED), any(ClientTransactionDto.class));
   }
 
   @Test
@@ -169,6 +177,7 @@ class TransactionFacadeTest {
     //when
     assertThrows(TransactionCompletedException.class, () -> transactionFacade.finishTransaction(SAMPLE_TRANSACTION_ID));
     verify(transactionRepositoryMock, never()).save(any(ClientTransaction.class));
+    verify(observerMock, never()).update(any(Status.class), any(ClientTransactionDto.class));
   }
 
   private ClientTransaction prepareSampleTransaction() {
