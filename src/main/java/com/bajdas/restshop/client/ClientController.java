@@ -10,8 +10,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ClientController {
 
-  @Autowired
   private ClientService clientService;
+
+  @Autowired
+  public ClientController(ClientService clientService) {
+    this.clientService = clientService;
+  }
 
   @PostMapping("/addClient")
   public ResponseEntity<Client> addClient(@RequestParam String name) {

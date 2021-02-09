@@ -7,8 +7,12 @@ import org.springframework.stereotype.Service;
 
 @Service
 class ClientService {
-  @Autowired
   private ClientRepository clientRepository;
+
+  @Autowired
+  public ClientService(ClientRepository clientRepository) {
+    this.clientRepository = clientRepository;
+  }
 
   Client addClient(String name) {
     var client = new Client();

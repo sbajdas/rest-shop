@@ -38,6 +38,7 @@ public class TransactionService implements Observable {
     var transaction = transactionManipulator.startNew(quantity, product);
     var transactionDto = saveChangesAndCalculateTotalPrice(transaction);
     log.info("New transaction with id {}. Product id: {}, quantity: {}", transactionDto.getTransactionId(), productId, quantity);
+    notifyObservers(Status.NEW_TRANSACTION, transactionDto);
     return transactionDto;
   }
 
@@ -47,6 +48,7 @@ public class TransactionService implements Observable {
     transaction = transactionManipulator.addItem(transaction, product, quantity);
     var transactionDto = saveChangesAndCalculateTotalPrice(transaction);
     log.info("Item added to transaction with id {}. Product id: {}, quantity: {}", transactionId, productId, quantity);
+    notifyObservers(Status.ADD_ITEM, transactionDto);
     return transactionDto;
   }
 
