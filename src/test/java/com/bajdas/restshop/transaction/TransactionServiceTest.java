@@ -3,6 +3,7 @@ package com.bajdas.restshop.transaction;
 import com.bajdas.restshop.model.ClientTransaction;
 import com.bajdas.restshop.model.ClientTransactionDto;
 import com.bajdas.restshop.model.Product;
+import com.bajdas.restshop.model.ProductBasketDto;
 import com.bajdas.restshop.notification.Observer;
 import com.bajdas.restshop.notification.Status;
 import com.bajdas.restshop.product.ProductService;
@@ -40,7 +41,7 @@ class TransactionServiceTest {
   private TransactionRepository transactionRepositoryMock;
   @Mock
   private ProductService productServiceMock;
-  @Mock
+  @Spy
   private TransactionManipulator manipulatorMock;
   @Mock
   private TotalPriceCalculator calculatorMock;
@@ -61,6 +62,7 @@ class TransactionServiceTest {
       .price(BigDecimal.ONE)
       .build();
   private static final BigDecimal QUANTITY = BigDecimal.valueOf(10.0);
+  private static final List<ProductBasketDto> SAMPLE_ITEMS = List.of(new ProductBasketDto(SAMPLE_PRODUCT_ID, QUANTITY));
 
   @BeforeEach
   void setUp() {
@@ -73,12 +75,10 @@ class TransactionServiceTest {
   void shouldStartNewTransactionWhenIdNotProvided() {
     //given
     var transaction = prepareSampleTransaction();
-    when(manipulatorMock.startNew(any(), any(Product.class)))
-        .thenReturn(transaction);
     when(transactionRepositoryMock.save(any(ClientTransaction.class))).thenReturn(transaction);
 
     //when
-    transactionService.createTransaction(SAMPLE_PRODUCT_ID, QUANTITY);
+    transactionService.createTransaction(SAMPLE_ITEMS);
 
     //then
     verify(transactionRepositoryMock, never()).findById(anyLong());
@@ -92,13 +92,11 @@ class TransactionServiceTest {
     var expectedQuantity = BigDecimal.valueOf(20);
     var transaction = prepareSampleTransaction();
     when(transactionRepositoryMock.findById(eq(SAMPLE_TRANSACTION_ID))).thenReturn(Optional.of(transaction));
-    when(manipulatorMock.addItem(eq(transaction), any(Product.class), any(BigDecimal.class)))
-        .thenCallRealMethod();
 
     when(transactionRepositoryMock.save(transactionCaptor.capture())).thenReturn(transaction);
 
     //when
-    transactionService.addToTransaction(SAMPLE_TRANSACTION_ID, SAMPLE_PRODUCT_ID, QUANTITY);
+    transactionService.addToTransaction(SAMPLE_TRANSACTION_ID, SAMPLE_ITEMS);
 
     //then
     var actualTransaction = transactionCaptor.getValue();
@@ -115,7 +113,7 @@ class TransactionServiceTest {
 
     //then
     assertThrows(TransactionNotFoundException.class,
-        () -> transactionService.addToTransaction(180L, SAMPLE_PRODUCT_ID, QUANTITY));
+        () -> transactionService.addToTransaction(180L, SAMPLE_ITEMS));
     verify(transactionRepositoryMock).findById(eq(180L));
     verifyNoMoreInteractions(transactionRepositoryMock);
   }
@@ -124,13 +122,11 @@ class TransactionServiceTest {
   void shouldSaveNewTransactionWithProductAmount() {
     //given
     var transaction = prepareSampleTransaction();
-    when(manipulatorMock.startNew(any(), any(Product.class)))
-        .thenReturn(transaction);
 
     when(transactionRepositoryMock.save(transactionCaptor.capture())).thenReturn(transaction);
 
     //when
-    transactionService.createTransaction(SAMPLE_PRODUCT_ID, QUANTITY);
+    transactionService.createTransaction(SAMPLE_ITEMS);
 
     //then
     verify(transactionRepositoryMock, never()).findById(anyLong());
@@ -149,7 +145,7 @@ class TransactionServiceTest {
 
     //then
     assertThrows(TransactionCompletedException.class,
-        () -> transactionService.addToTransaction(1L, SAMPLE_PRODUCT_ID, QUANTITY));
+        () -> transactionService.addToTransaction(1L, SAMPLE_ITEMS));
     verify(transactionRepositoryMock, never()).save(any(ClientTransaction.class));
   }
 
@@ -159,7 +155,6 @@ class TransactionServiceTest {
     var transaction = prepareSampleTransaction();
     when(transactionRepositoryMock.findById(eq(SAMPLE_TRANSACTION_ID))).thenReturn(Optional.of(transaction));
     when(transactionRepositoryMock.save(transactionCaptor.capture())).thenReturn(transaction);
-
     //when
     transactionService.finishTransaction(SAMPLE_TRANSACTION_ID);
 
@@ -187,7 +182,6 @@ class TransactionServiceTest {
     transaction.setTransactionId(1L);
     transaction.addItem(SAMPLE_PRODUCT, QUANTITY);
     return transaction;
-
   }
 
 }

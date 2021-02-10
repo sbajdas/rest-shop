@@ -9,13 +9,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 @Component
-public class TransactionManipulator {
-
-  ClientTransaction startNew(BigDecimal quantity, Product product) {
-    var transaction = new ClientTransaction();
-    transaction.addItem(product, quantity);
-    return transaction;
-  }
+class TransactionManipulator {
 
   ClientTransaction addItem(ClientTransaction transaction, Product product, BigDecimal quantity) {
     Optional<ProductQuantity> existingItem = transaction.getItems().stream()
@@ -27,5 +21,16 @@ public class TransactionManipulator {
       transaction.addItem(product, quantity);
     }
     return transaction;
+  }
+
+  ClientTransaction startNew() {
+    return new ClientTransaction();
+  }
+
+  void finish(ClientTransaction transaction) {
+    if(transaction.isCompleted()) {
+      throw new TransactionCompletedException();
+    }
+    transaction.setCompleted(true);
   }
 }

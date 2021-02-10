@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.services.sns.SnsClient;
 
 @Configuration
-public class RestShopConfiguration {
+class RestShopConfiguration {
 
   @Bean
   SnsClient snsClient() {

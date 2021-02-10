@@ -21,12 +21,12 @@ class TransactionManipulatorTest {
       .build();
 
   @Test
-  void shouldStartNewTransactionWithProductQuantity() {
+  void shouldStartNewTransaction() {
     //given
-    var expected = getTransactionWithItem();
+    var expected = new ClientTransaction();
 
     //when
-    var actual = manipulator.startNew(BigDecimal.ONE, TEST_PRODUCT);
+    var actual = manipulator.startNew();
 
     //then
     assertEquals(expected, actual);

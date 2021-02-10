@@ -8,7 +8,7 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 
 @Component
-public class ProductCreator {
+class ProductCreator {
 
   @Autowired
   private ProductRepository repository;

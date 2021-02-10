@@ -2,6 +2,7 @@ package com.bajdas.restshop.transaction;
 
 import com.bajdas.restshop.model.ClientTransaction;
 import com.bajdas.restshop.model.ClientTransactionDto;
+import com.bajdas.restshop.model.ProductBasketDto;
 import com.bajdas.restshop.notification.Observable;
 import com.bajdas.restshop.notification.Observer;
 import com.bajdas.restshop.notification.Status;
@@ -11,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -33,28 +33,25 @@ public class TransactionService implements Observable {
     this.observers = observers;
   }
 
-  ClientTransactionDto createTransaction(Long productId, BigDecimal quantity) {
-    var product = productService.findProduct(productId);
-    var transaction = transactionManipulator.startNew(quantity, product);
+  ClientTransactionDto createTransaction(List<ProductBasketDto> itemList) {
+    var transaction = transactionManipulator.startNew();
+    itemList.forEach(item -> addItemToTransaction(transaction, item));
     var transactionDto = saveChangesAndCalculateTotalPrice(transaction);
-    log.info("New transaction with id {}. Product id: {}, quantity: {}", transactionDto.getTransactionId(), productId, quantity);
     notifyObservers(Status.NEW_TRANSACTION, transactionDto);
     return transactionDto;
   }
 
-  ClientTransactionDto addToTransaction(Long transactionId, Long productId, BigDecimal quantity) {
-    var product = productService.findProduct(productId);
+  ClientTransactionDto addToTransaction(Long transactionId, List<ProductBasketDto> itemList) {
     var transaction = findOpenTransaction(transactionId);
-    transaction = transactionManipulator.addItem(transaction, product, quantity);
+    itemList.forEach(item -> addItemToTransaction(transaction, item));
     var transactionDto = saveChangesAndCalculateTotalPrice(transaction);
-    log.info("Item added to transaction with id {}. Product id: {}, quantity: {}", transactionId, productId, quantity);
-    notifyObservers(Status.ADD_ITEM, transactionDto);
+    notifyObservers(Status.ADD_ITEMS, transactionDto);
     return transactionDto;
   }
 
   ClientTransactionDto finishTransaction(Long transactionId) {
     var transaction = findOpenTransaction(transactionId);
-    transaction.setCompleted(true);
+    transactionManipulator.finish(transaction);
     var transactionDto = saveChangesAndCalculateTotalPrice(transaction);
     log.info("Transaction with id {} completed.", transactionId);
     notifyObservers(Status.TRANSACTION_COMPLETED, transactionDto);
@@ -73,6 +70,12 @@ public class TransactionService implements Observable {
       throw new TransactionCompletedException();
     }
     return transaction;
+  }
+
+  private void addItemToTransaction(ClientTransaction transaction, ProductBasketDto item) {
+    var product = productService.findProduct(item.getProductId());
+    transactionManipulator.addItem(transaction, product, item.getQuantity());
+    log.info("Item added to transaction with id {}. Product id: {}, quantity: {}", transaction.getTransactionId(), item.getProductId(), item.getQuantity());
   }
 
   @Override
