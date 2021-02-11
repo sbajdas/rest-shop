@@ -5,12 +5,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
+@RequestMapping("/product")
 public class ProductController {
 
   private ProductService productService;
@@ -20,7 +22,7 @@ public class ProductController {
     this.productService = productService;
   }
 
-  @GetMapping("/productInfo")
+  @GetMapping
   public ResponseEntity<Product> getProductInfo(@RequestParam(required = false) String name,
                                        @RequestParam(required = false) Long id) {
     if(name == null && id == null) {
@@ -30,7 +32,7 @@ public class ProductController {
       return ResponseEntity.ok(product);
   }
 
-  @GetMapping("/products")
+  @GetMapping("/all")
   @Cacheable("products")
   public ResponseEntity<List<Product>> getProducts() {
       return ResponseEntity.ok(productService.findAllProducts());

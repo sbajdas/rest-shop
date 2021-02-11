@@ -58,7 +58,6 @@ class TransactionControllerTest {
     verifyNoMoreInteractions(transactionServiceMock);
   }
 
-
   @Test
   void shouldPassException() {
     //given
